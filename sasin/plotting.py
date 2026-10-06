@@ -66,8 +66,13 @@ def line_figure(x, series, xlabel, ylabel, title=None, styles=None, xticks=None,
     return fig, ax
 
 
-def heatmap_panel(ax, xs_km, ys_km, Z, users_km, star_km, star_text, cbar_label,
+def heatmap_panel(ax, xs_km, ys_km, Z, users_km, star_km, star_label, cbar_label,
                   cmap=SEQ, title=None):
+    """Map of Z over UAV positions, users (squares) and the optimized UAV position (star).
+
+    star_label (one line, e.g. "Algorithm 2: eta = 0.86 at (1.0, 2.0) km") is shown
+    under the panel title so it never hides the map.
+    """
     im = ax.pcolormesh(xs_km, ys_km, Z, cmap=cmap, shading="auto", rasterized=True)
     cb = ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.03)
     cb.set_label(cbar_label, color=INK2)
@@ -75,21 +80,13 @@ def heatmap_panel(ax, xs_km, ys_km, Z, users_km, star_km, star_text, cbar_label,
     ax.scatter(users_km[:, 0], users_km[:, 1], marker="s", s=36, facecolor="white",
                edgecolor=INK, linewidth=1.0, label="Users", zorder=3)
     ax.scatter([star_km[0]], [star_km[1]], marker="*", s=220, facecolor=SERIES[3],
-               edgecolor=INK, linewidth=0.9, label="Optimized", zorder=4)
-    # keep the label inside the axes: open it towards the centre of the map
-    right = star_km[0] > 0.5 * (xs_km[0] + xs_km[-1])
-    top = star_km[1] > 0.5 * (ys_km[0] + ys_km[-1])
-    ax.annotate(star_text, xy=star_km, xytext=(-10 if right else 10, -10 if top else 10),
-                textcoords="offset points", ha="right" if right else "left",
-                va="top" if top else "bottom", fontsize=7.5, color=INK, zorder=5,
-                bbox=dict(boxstyle="round,pad=0.25", fc="white", ec=AXIS, lw=0.6))
+               edgecolor=INK, linewidth=0.9, label="Optimized", zorder=4, clip_on=False)
     ax.set_xlabel("X axis (km)")
     ax.set_ylabel("Y axis (km)")
     ax.set_aspect("equal")
     ax.grid(False)
     ax.legend(loc="best", fontsize=7.5)
-    if title:
-        ax.set_title(title, loc="left")
+    ax.set_title("\n".join(t for t in (title, star_label) if t), loc="left")
     return im
 
 

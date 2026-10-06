@@ -8,6 +8,7 @@ Each figure writes results/figN.png plus the raw numbers (results/figN.csv or .n
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import os
 import time
@@ -46,10 +47,11 @@ def _mc(fn, trials, workers, seed0):
 
 
 def _write_csv(path, x_name, x, series):
-    with open(path, "w") as f:
-        f.write(",".join([x_name] + list(series)) + "\n")
+    with open(path, "w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow([x_name] + list(series))
         for i, xv in enumerate(x):
-            f.write(",".join([f"{xv:.6g}"] + [f"{series[k][i]:.6g}" for k in series]) + "\n")
+            w.writerow([f"{xv:.6g}"] + [f"{series[k][i]:.6g}" for k in series])
 
 
 def _line_out(name, x, x_name, series, **plot_kw):
@@ -305,9 +307,9 @@ def fig4(workers, grid=41, seed=11, n_init=10, **_):
         np.savez(os.path.join(OUT, f"fig4_M{M}_H{int(H)}.npz"), xs=xs, Z=Z,
                  users=sc.user_pos, ao_L=ao.L, ao_eta=ao.eta)
         pl.heatmap_panel(axes[k], xs / 1e3, xs / 1e3, Z, sc.user_pos / 1e3, ao.L / 1e3,
-                         f"Optimized efficiency: {ao.eta:.4f}\nOptimized placement: "
-                         f"({ao.L[0] / 1e3:.1f}, {ao.L[1] / 1e3:.1f})",
-                         "Service efficiency", title=f"({'abc'[k]}) M = {M}, H = {H:g} m")
+                         f"Algorithm 2: η = {ao.eta:.4f} at ({ao.L[0] / 1e3:.1f}, "
+                         f"{ao.L[1] / 1e3:.1f}) km", "Service efficiency",
+                         title=f"({'abc'[k]}) M = {M}, H = {H:g} m, map max = {Z.max():.4f}")
     fig.suptitle("Fig. 4 - uplink: exhaustive search map vs Algorithm 2 (star)",
                  x=0.01, ha="left", color=pl.INK)
     pl.save(fig, os.path.join(OUT, "fig4.png"))
@@ -335,13 +337,12 @@ def fig9_10(workers, grid=41, seed=11, **_):
                  power=Z_pow, users=sc.user_pos, ao_L=ao.L, ao_eta=ao.eta,
                  ao_power=ao.total_power)
         title = f"({'abc'[k]}) M = {M}, H = {H:g} m"
+        where = f"at ({ao.L[0] / 1e3:.1f}, {ao.L[1] / 1e3:.1f}) km"
         pl.heatmap_panel(ax9[k], xs / 1e3, xs / 1e3, Z_pow, sc.user_pos / 1e3, ao.L / 1e3,
-                         f"Optimized transmit power: {ao.total_power:.4f} W\n"
-                         f"Optimized placement: ({ao.L[0] / 1e3:.1f}, {ao.L[1] / 1e3:.1f})",
+                         f"Algorithm 4: {ao.total_power:.4f} W {where}",
                          "Total transmit power (W)", title=title)
         pl.heatmap_panel(ax10[k], xs / 1e3, xs / 1e3, Z_eta, sc.user_pos / 1e3, ao.L / 1e3,
-                         f"Optimized efficiency: {ao.eta:.4f}\n"
-                         f"Optimized placement: ({ao.L[0] / 1e3:.1f}, {ao.L[1] / 1e3:.1f})",
+                         f"Algorithm 4: η = {ao.eta:.4f} {where}",
                          "Service efficiency", title=title)
     fig9.suptitle("Fig. 9 - downlink: minimum UAV power for the best efficiency vs "
                   "Algorithm 4 (star)", x=0.01, ha="left", color=pl.INK)

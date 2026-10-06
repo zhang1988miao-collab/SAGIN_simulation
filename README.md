@@ -15,7 +15,7 @@ optimization algorithms and regenerates every numerical result (Figs. 2–14).
 ```bash
 pip install -r requirements.txt
 python -m pytest -q tests                                          # sanity checks
-python -m sasin.experiments --figs all --trials 200 --workers 4    # all figures (about 15 min on 4 cores)
+python -m sasin.experiments --figs all --trials 200 --workers 4    # all figures (about 5 min on 4 cores)
 python -m sasin.experiments --figs 2 7 --trials 500                # selected figures
 python -m sasin.experiments --figs all --quick                     # smoke test (about 30 s)
 ```
@@ -126,4 +126,42 @@ The paper does not give some values. I chose these (all can be changed in `Syste
 
 ## Results
 
-See `results/`. RESULTS_PLACEHOLDER
+All figures below were produced by
+`python -m sasin.experiments --figs all --trials 200 --workers 4`, which took about 5 minutes
+on 4 cores. They are in `results/`. "Paper" values are read off the published plots and
+are approximate.
+
+| Fig. | What it shows | Paper | This code |
+|---|---|---|---|
+| 2 | Uplink η vs R̄ (M = 10) | exhaustive ≈0.53 → 0.12; GRASP ≈ exhaustive > greedy ≫ TDMA, opportunistic | exhaustive 0.55 → 0.15; GRASP within 6 % at R̄ = 0.5 and within 1 % for R̄ ≥ 1.25; greedy 7–13 % lower; TDMA, opportunistic ≤ 0.05 |
+| 3 | Uplink η vs M | R̄ = 1 rises then falls (peak ≈0.43); R̄ = 2 falls from ≈0.58; larger K is slightly worse | R̄ = 1 peaks at M = 3–4 (0.48); R̄ = 2 falls 0.60 → 0.22; larger K is slightly worse |
+| 4 | Uplink map vs Algorithm 2 | Algorithm 2 lands on the best region | Algorithm 2 equals the map maximum in (a), (b) and beats the 41×41 grid in (c) (0.677 vs 0.664) |
+| 5 | Uplink η vs contact angle | almost flat | flat up to ≈π/32, then falls (see note 1) |
+| 6 | Uplink η vs LEO altitude | flat to ≈1300 km, then 0.265 → 0.215 | flat to ≈1300 km, then 0.46 → 0.42 |
+| 7 | Downlink η vs R̄ | M = 5: 1.0 → 0.57; M = 10: 0.93 → 0.39; greedy ≈ exhaustive | M = 5: 0.97 → 0.30; M = 10: 0.74 → 0.21; greedy within 0–12 % |
+| 8 | Downlink η vs P4 | rises 0.12 → 0.78; fewer users is better; larger K is better | rises 0.16 → 0.67; fewer users is better; K has almost no effect (note 2) |
+| 9, 10 | Downlink power / η maps vs Algorithm 4 | Algorithm 4 hits the max-η region at its minimum power | max η in all panels; power equals the grid minimum in (a), (b) (6.70 vs 6.71 W); in (c) greedy picks a costlier 5-user set (9.63 vs 4.86 W) |
+| 11 | Downlink η vs contact angle | flat | falls at large angles (note 1) |
+| 12 | Downlink η vs LEO altitude | R̄ = 2: 0.435 → 0.345; R̄ = 3: 0.30 → 0.205 | R̄ = 2: 0.43 → 0.335; R̄ = 3: 0.29 → 0.21 |
+| 13, 14 | AO convergence and UAV path | uplink ≈10 iterations, downlink ≈3 | uplink 1–2 iterations from the best screened start; downlink 2 iterations (note 3) |
+
+Notes on the differences:
+
+1. **Contact angle (Figs. 5, 11) vs altitude (Figs. 6, 12).** With free-space path loss, the
+   UAV–satellite distance grows from 600 km to 2669 km as the contact angle goes from 0 to
+   π/8, which is *longer* than the 2000 km at which the paper's altitude figures already
+   degrade. One link budget therefore cannot make Figs. 5/11 flat and Figs. 6/12 decline. The
+   satellite link budget is not given in the paper, so this code fits the altitude figures.
+   Raise `G_ul_dB` / `G_dl_dB` to flatten the contact-angle curves; that moves the knee in
+   Figs. 6/12 to higher altitudes.
+2. **Rician factor.** Each user's LoS component is a steering vector at a random angle. A
+   larger K makes the channels more deterministic but not more separable, so its effect is
+   small. The paper's exact LoS model is not given.
+3. **Convergence (Figs. 13–14).** Starting exactly at (−50, −50) km, the uplink SCA step stays
+   in the corner (see "Restarts of Algorithm 2"). The Fig. 13 uplink curves therefore follow
+   the best of the screened starts, which converges in one or two iterations. Fig. 14 also
+   plots the stuck run from (−50, −50). The downlink path from (50, −50) km behaves as in
+   the paper and settles in two iterations.
+4. **Absolute values.** Absolute numbers depend on parameters the paper does not state
+   (target-rate spread, P1 calibration, user layout), so expect qualitative rather than exact
+   agreement.
