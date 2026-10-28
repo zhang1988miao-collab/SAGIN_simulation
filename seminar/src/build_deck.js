@@ -31,9 +31,9 @@ const HEX = { ink: "1B2638", navy: "0B1E3F", muted: "5B6880", line: "D5DCE6", ca
 const pres = new pptxgen();
 pres.layout = "LAYOUT_WIDE"; // 13.333 x 7.5 in
 pres.theme = { headFontFace: THEME.headFontFace, bodyFontFace: THEME.bodyFontFace };
-pres.title = "Optimization Techniques for Space-Air-Ground Integrated Networks";
+pres.title = "Emerging Techniques for Space-Air-Ground Integrated Networks";
 pres.subject = "Seminar slide template";
-pres.author = "Presenter Name";
+pres.author = "Miao Zhang";
 pres.company = "Department / University";
 const C = pres.SchemeColor;
 const S = pres.shapes;
@@ -42,7 +42,7 @@ const SEC = {
   I: { key: "I", num: "01", label: "PART I", name: "Introduction", kicker: "PART I  ·  INTRODUCTION", color: "2188D8", dark: "1670B3", tint: "E8F2FC", bright: "6CC0FF", scheme: C.accent1, bg: "bg_sec1.jpg" },
   II: { key: "II", num: "02", label: "PART II", name: "Polarforming Design in SAGIN", kicker: "PART II  ·  POLARFORMING DESIGN IN SAGIN", color: "0F9F8F", dark: "0B7F72", tint: "E2F5F2", bright: "4FD8C6", scheme: C.accent2, bg: "bg_sec2.jpg" },
   III: { key: "III", num: "03", label: "PART III", name: "Atomic-to-Space: Quantum Receiver for SAGINs", kicker: "PART III  ·  ATOMIC-TO-SPACE: QUANTUM RECEIVER FOR SAGINS", color: "7A4FD8", dark: "5F37BE", tint: "EFEAFC", bright: "B9A2FF", scheme: C.accent3, bg: "bg_sec3.jpg" },
-  IV: { key: "IV", num: "04", label: "PART IV", name: "Multi-Agent DRL for SAGIN", kicker: "PART IV  ·  MULTI-AGENT DRL FOR SAGIN", color: "E07B22", dark: "B85F12", tint: "FCEEE2", bright: "FFB26B", scheme: C.accent4, bg: "bg_sec4.jpg" },
+  IV: { key: "IV", num: "04", label: "PART IV", name: "MADRL and Rate-Splitting Multiple Access for SAGIN", kicker: "PART IV  ·  MADRL AND RATE-SPLITTING MULTIPLE ACCESS FOR SAGIN", color: "E07B22", dark: "B85F12", tint: "FCEEE2", bright: "FFB26B", scheme: C.accent4, bg: "bg_sec4.jpg" },
 };
 const PARTS = ["I", "II", "III", "IV"];
 
@@ -168,7 +168,7 @@ function defineLayouts() {
       objs.push({ text: { text: r, options: { shape: S.OVAL, x: 11.17 + i * 0.4, y: 0.36, w: 0.32, h: 0.32, fontSize: 9, bold: true, align: "center", valign: "middle", margin: 0,
         color: on ? HEX.white : "8C97AB", fill: { color: on ? SEC[r].color : "E9EDF3" }, line: { color: on ? SEC[r].color : "E9EDF3", width: 0.5 } } } });
     });
-    objs.push({ text: { text: "Optimization Techniques for SAGINs  ·  Seminar", options: { x: M, y: 7.02, w: 7, h: 0.28, fontSize: 10, color: HEX.muted, margin: 0 } } });
+    objs.push({ text: { text: "Emerging Techniques for SAGINs  ·  Seminar", options: { x: M, y: 7.02, w: 7, h: 0.28, fontSize: 10, color: HEX.muted, margin: 0 } } });
     return objs;
   };
   const common = (objs) => ({
@@ -328,14 +328,14 @@ function buildSlides() {
   // ---------------------------------------------------------------- 1. title
   pres.addSection({ title: "Opening" });
   let s = pres.addSlide({ masterName: "TITLE", sectionTitle: "Opening" });
-  s.addText("Optimization Techniques for Space-Air-Ground Integrated Networks", { placeholder: "title" });
-  s.addText("Polarforming  ·  Atomic Quantum Receivers  ·  Multi-Agent Deep Reinforcement Learning", { placeholder: "subtitle" });
+  s.addText([{ text: "Emerging Techniques for" }, { text: "Space-Air-Ground Integrated Networks", options: { softBreakBefore: true } }], { placeholder: "title" });
+  s.addText("Polarforming  ·  Atomic Quantum Receivers  ·  MADRL and Rate-Splitting Multiple Access", { placeholder: "subtitle" });
   s.addText(paras([
-    rich("Presenter Name", { fontSize: 18, bold: true, color: HEX.white }),
+    rich("Miao Zhang", { fontSize: 18, bold: true, color: HEX.white }),
     rich("Department / Laboratory, University", { fontSize: 15, color: "D6E2F2" }),
     rich("Seminar Series  ·  Month DD, 2026", { fontSize: 15, color: "D6E2F2" }),
   ]), { placeholder: "presenter" });
-  s.addNotes("Title slide. Replace the presenter name, affiliation and date (they are placeholders). One-sentence hook: SAGIN promises global 6G coverage, but each layer brings its own bottleneck; this talk shows three optimization tools that address them.");
+  s.addNotes("Title slide. Replace the affiliation and date (they are placeholders). One-sentence hook: SAGIN promises global 6G coverage, but each layer brings its own bottleneck; this talk presents three emerging techniques that address them, and how to optimize each one.");
 
   // ---------------------------------------------------------------- 2. outline
   s = newSlide("CONTENT_GENERAL", "Opening", "Outline",
@@ -346,7 +346,7 @@ function buildSlides() {
     { k: "I", icon: "TbWorld", title: "Introduction", items: ["SAGIN", "Polarforming", "Atomic receivers", "RSMA", "MADRL"], q: "Which tools fit which layer?" },
     { k: "II", icon: "TbAntenna", title: "Polarforming Design in SAGIN", items: ["System model", "Proposed design", "Simulation results"], q: "Can antennas follow the channel's polarization?" },
     { k: "III", icon: "TbAtom", title: "Atomic-to-Space: Quantum Receiver for SAGINs", items: ["System model", "Proposed design", "Simulation results"], q: "Can atoms hear weak satellite signals?" },
-    { k: "IV", icon: "TbBrain", title: "Multi-Agent DRL for SAGIN", items: ["System model", "Proposed design", "Simulation results"], q: "Can UAVs learn to cooperate?" },
+    { k: "IV", icon: "TbBrain", title: SEC.IV.name, items: ["System model", "Proposed design", "Simulation results"], q: "Can UAVs learn to share spectrum with RSMA?" },
   ];
   const cw = (CW - 3 * 0.25) / 4;
   outline.forEach((o, i) => {
@@ -552,12 +552,12 @@ function buildSlides() {
   statCallout(s, SEC.III, M + 2 * (sw + 0.2), 6.0, sw, 0.8, `−${loss5.toFixed(0)} dB`, "if the LO is 5× too strong");
 
   // ============================================== PART IV: MADRL
-  pres.addSection({ title: "Part IV: Multi-Agent DRL" });
-  sectionSlide("IV", "Part IV: Multi-Agent DRL", "System model  ·  Proposed design  ·  Simulation results",
-    "Part IV: multi-agent deep reinforcement learning for a multi-UAV RSMA network with LEO backhaul.");
+  pres.addSection({ title: "Part IV: MADRL and RSMA" });
+  sectionSlide("IV", "Part IV: MADRL and RSMA", "System model  ·  Proposed design  ·  Simulation results",
+    "Part IV: multi-agent deep reinforcement learning combined with rate-splitting multiple access, for a multi-UAV network with LEO backhaul.");
 
   const d4 = DATA.part4;
-  s = newSlide("CONTENT_IV", "Part IV: Multi-Agent DRL", "System Model",
+  s = newSlide("CONTENT_IV", "Part IV: MADRL and RSMA", "System Model",
     "$J$ UAVs with LEO backhaul serve $K$ ground users with RSMA; each UAV is an agent that moves and allocates power on its own.",
     "Scenario: LEO satellite provides backhaul C_j^sat(t); each UAV serves its cluster with RSMA; inter-UAV interference couples the agents. Problem (P3) is a long-term, coupled, partially observable control problem — hard for one-shot optimization, natural for MADRL.");
   figure(s, "ma_system.png", M, TOP, 5.3, 4.24, "System model: LEO backhaul to three UAV agents, each serving a cluster of ground users, with trajectories, a minimum-distance constraint and inter-UAV interference.");
@@ -567,7 +567,7 @@ function buildSlides() {
   y += mathCard(s, 6.2, y, 6.53, "Achievable rate of user $k$ served by UAV $j$", ["ma_rate"], { labelColor: SEC.IV.dark }) + 0.14;
   mathCard(s, 6.2, y, 6.53, "Long-term sum-rate maximization", ["ma_problem"], { labelColor: SEC.IV.dark });
 
-  s = newSlide("CONTENT_IV", "Part IV: Multi-Agent DRL", "Proposed Design: MAPPO with a Centralized Critic",
+  s = newSlide("CONTENT_IV", "Part IV: MADRL and RSMA", "Proposed Design: MAPPO with a Centralized Critic",
     "Recast (P3) as a Dec-POMDP and train shared actors with a centralized critic; execution needs only local observations.",
     "Map P3 to a Dec-POMDP (table). Actors output movement, power split and common-rate shares; the critic sees the global state during training only. Mention reward shaping (QoS and collision penalties) and training tricks (parameter sharing, GAE, PPO clipping). Replace with your network sizes and hyperparameters.");
   figure(s, "ma_arch.png", M, TOP, 6.4, 3.0, "MAPPO architecture: decentralized actors with shared weights output movement, power split and common rate; a SAGIN simulator returns observations and rewards; a rollout buffer, central critic and PPO update train the actors.");
@@ -577,7 +577,7 @@ function buildSlides() {
   s.addText(rich("**Execution:** each UAV runs its own actor on board from local $o_j$ only; the critic is dropped after training.", { fontSize: 14, color: HEX.ink }),
     { x: 7.25, y: 5.06 + rh + 0.12, w: 5.48, h: 0.5, margin: 0, valign: "top", objectName: nm("note") });
 
-  s = newSlide("CONTENT_IV", "Part IV: Multi-Agent DRL", "Simulation Results",
+  s = newSlide("CONTENT_IV", "Part IV: MADRL and RSMA", "Simulation Results",
     "MAPPO with a centralized critic learns faster and better, and RSMA keeps adding rate when the network is overloaded.",
     "Left: learning curves (average episode reward). Right: sum rate versus number of users for different multiple-access schemes. THE DATA ARE ILLUSTRATIVE (synthetic curves in src/sim_data.py); replace them and the callouts.");
   chartCard(s, SEC.IV, M, TOP, 5.94, 3.6, {
@@ -613,7 +613,7 @@ function buildSlides() {
   const tk = [
     { k: "II", icon: "TbAntenna", head: "Polarforming", body: "Polarization is a new degree of freedom: joint polarforming + RSMA design removes mismatch loss and adds diversity." },
     { k: "III", icon: "TbAtom", head: "Atomic receivers", body: "Quantum front ends extend space–ground links; LO and Doppler awareness decide how much of the gain is realized." },
-    { k: "IV", icon: "TbBrain", head: "Multi-agent DRL", body: "CTDE learning gives scalable, real-time control of multi-UAV SAGINs from local observations only." },
+    { k: "IV", icon: "TbBrain", head: "MADRL + RSMA", body: "CTDE learning steers UAV trajectories and RSMA power and rate splitting in real time, from local observations only." },
   ];
   const tw = (CW - 2 * 0.25) / 3;
   tk.forEach((t, i) => {
@@ -664,7 +664,7 @@ function buildSlides() {
   s.addText(paras([
     rich("Questions & discussion", { fontSize: 22, color: "A8D8FF" }),
     rich(" ", { fontSize: 10 }),
-    rich("Presenter Name  ·  your.email@university.edu", { fontSize: 16, color: "D6E2F2" }),
+    rich("Miao Zhang  ·  your.email@university.edu", { fontSize: 16, color: "D6E2F2" }),
     rich("Department / Laboratory, University", { fontSize: 16, color: "D6E2F2" }),
   ]), { placeholder: "body" });
   s.addNotes("Closing slide. Replace the contact details.");

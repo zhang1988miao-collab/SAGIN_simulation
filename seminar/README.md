@@ -1,4 +1,4 @@
-# Seminar slide template: Optimization Techniques for SAGINs
+# Seminar slide template: Emerging Techniques for SAGINs
 
 `SAGIN_Optimization_Seminar.pptx` is a 23-slide, 16:9 English seminar deck: a title slide,
 an outline, four parts, a conclusion, references and a closing slide.
@@ -9,12 +9,12 @@ an outline, four parts, a conclusion, references and a closing slide.
 | 3–8 | **Part I: Introduction.** Divider, then one slide each on SAGIN, polarforming, atomic (Rydberg) receivers, RSMA and MADRL. Each slide has its own figure |
 | 9–12 | **Part II: Polarforming design in SAGIN.** Divider, system model, proposed design, simulation results |
 | 13–16 | **Part III: Atomic-to-Space: quantum receiver for SAGINs.** Divider, system model, proposed design, simulation results |
-| 17–20 | **Part IV: Multi-agent DRL for SAGIN.** Divider, system model, proposed design, simulation results |
+| 17–20 | **Part IV: MADRL and rate-splitting multiple access for SAGIN.** Divider, system model, proposed design, simulation results |
 | 21–23 | Conclusion and future directions, references, thank-you slide |
 
 ## Editing the template
 
-- **Placeholders.** Replace the presenter name, affiliation, date and e-mail on slides 1 and 23.
+- **Placeholders.** The presenter is Miao Zhang. Replace the affiliation, date and e-mail on slides 1 and 23.
 - **Layouts.** Slide titles and lead sentences are layout placeholders. A new slide made from a
   layout already has the section kicker, the I–IV progress dots, the footer and the slide number.
   Use `CONTENT_II` for Part II, `CONTENT_III` for Part III, and so on.
