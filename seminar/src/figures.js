@@ -649,7 +649,8 @@ function bgTitle() {
 function bgSection(part) {
   const W = 1333, H = 750;
   const extra = `<radialGradient id="gEarth" cx="0.35" cy="0.25" r="0.9"><stop offset="0" stop-color="#2F7FD0"/><stop offset="0.5" stop-color="#17508F"/><stop offset="1" stop-color="#0A2A55"/></radialGradient>
-  <radialGradient id="gNuc" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFFFFF"/><stop offset="0.35" stop-color="#C9B6FF"/><stop offset="1" stop-color="#7A4FD8" stop-opacity="0"/></radialGradient>`;
+  <radialGradient id="gNuc" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFFFFF"/><stop offset="0.35" stop-color="#C9B6FF"/><stop offset="1" stop-color="#7A4FD8" stop-opacity="0"/></radialGradient>
+  <linearGradient id="gCommon" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F2B53A" stop-opacity="0.42"/><stop offset="1" stop-color="#F2B53A" stop-opacity="0.08"/></linearGradient>`;
   const { defs, base } = darkBase(W, H, extra);
   let b = base + stars(W, H, 170, 50 + part);
   const cx = 1010, cy = 375;
@@ -686,19 +687,40 @@ function bgSection(part) {
     }
     b += line(700, 650, 1333, 610, { stroke: C.probe, width: 3, opacity: 0.45 }) + line(700, 664, 1333, 624, { stroke: C.coupling, width: 3, opacity: 0.4 });
   } else {
-    const rng = L.mulberry32(77);
-    const pts = [];
-    for (let gx = 0; gx < 6; gx++) for (let gy = 0; gy < 5; gy++)
-      pts.push([790 + gx * 92 + (rng() - 0.5) * 60, 150 + gy * 112 + (rng() - 0.5) * 60]);
-    for (let i = 0; i < pts.length; i++)
-      for (let j = i + 1; j < pts.length; j++) {
-        const d = Math.hypot(pts[i][0] - pts[j][0], pts[i][1] - pts[j][1]);
-        if (d < 135) b += line(pts[i][0], pts[i][1], pts[j][0], pts[j][1], { stroke: "#F3B57A", width: 1.4, opacity: 0.35 });
+    // Part IV: MADRL + RSMA. A shared network (centralized training) linked to three UAV
+    // agents; each UAV sends a wide common stream (gold cone) and private streams (orange)
+    // to its ground users on the Earth's limb.
+    const ecx = 1080, ecy = 1560, er = 900;
+    const groundY = (x) => ecy - Math.sqrt(er * er - (x - ecx) * (x - ecx));
+    b = base + stars(W, H, 150, 54, (x, y) => Math.hypot(x - ecx, y - ecy) < er + 30);
+    b += earthLimb(ecx, ecy, er);
+    // shared network (critic / policy), top right
+    const layers = [[910, 3], [995, 5], [1080, 5], [1165, 3]];
+    const pos = layers.map(([x, n]) => Array.from({ length: n }, (_, k) => [x, 140 + (k - (n - 1) / 2) * 34]));
+    for (let i = 0; i < pos.length - 1; i++)
+      for (const a of pos[i]) for (const c of pos[i + 1]) b += line(a[0], a[1], c[0], c[1], { stroke: "#F3B57A", width: 1.2, opacity: 0.3 });
+    for (const col of pos) for (const [x, y] of col) b += circle(x, y, 13, { fill: C.orange, opacity: 0.18 }) + circle(x, y, 7.5, { fill: "#FFB26B" });
+    // agents and their RSMA beams
+    const uavs = [[832, 400], [1038, 335], [1232, 420]];
+    const anchors = [[995, 208], [1038, 216], [1080, 208]];
+    uavs.forEach(([ux, uy], j) => {
+      const [ax, ay] = anchors[j];
+      b += path(`M${ax},${ay} Q${(ax + ux) / 2 + (j - 1) * 40},${(ay + uy) / 2 - 30} ${ux},${uy - 34}`, { stroke: "#FFB26B", width: 1.8, dash: "6 7", opacity: 0.55 });
+      const gl = groundY(ux - 95) - 6, gr = groundY(ux + 95) - 6;
+      b += path(`M${ux - 8},${uy + 16} L${ux - 95},${gl} L${ux + 95},${gr} L${ux + 8},${uy + 16} Z`, { fill: "url(#gCommon)" });
+      b += path(`M${ux - 8},${uy + 16} L${ux - 95},${gl} M${ux + 8},${uy + 16} L${ux + 95},${gr}`, { stroke: C.gold, width: 1.2, opacity: 0.35 });
+      for (const dx of [-62, 0, 62]) {
+        const gx = ux + dx, gy = groundY(gx) - 10;
+        b += line(ux, uy + 16, gx, gy, { stroke: "#FF9F55", width: 2.4, opacity: 0.85 });
+        b += circle(gx, gy, 13, { fill: "#FFB26B", opacity: 0.22 }) + circle(gx, gy, 6.5, { fill: "#FFE3C4" });
       }
-    pts.forEach(([x, y], i) => {
-      const hub = i % 6 === 0;
-      b += circle(x, y, hub ? 13 : 6, { fill: hub ? C.orange : "#F6C89A", opacity: hub ? 0.95 : 0.7 });
-      if (hub) b += circle(x, y, 24, { stroke: C.orange, width: 2, opacity: 0.45 });
+      b += circle(ux, uy, 50, { stroke: C.orange, width: 1.8, opacity: 0.4 }) + circle(ux, uy, 50, { fill: C.orange, opacity: 0.07 });
+      // UAV glyph for a dark background
+      let g = line(-34, -3, 34, -3, { stroke: "#F6D3B0", width: 3.4 });
+      for (const sx of [-34, 34]) g += line(sx, -3, sx, -10, { stroke: "#F6D3B0", width: 2.6 }) + ellipse(sx, -12, 20, 4.2, { fill: "#E6EEF8", opacity: 0.9 });
+      g += rect(-16, -10, 32, 17, { fill: C.orange, stroke: "#FFD3A8", width: 1.6, r: 7 });
+      g += rect(-6, 7, 12, 5, { fill: "#FFD3A8", r: 2 });
+      b += group(g, { x: ux, y: uy, s: 1.05 });
     });
   }
   return svgDoc(W, H, b, defs);
