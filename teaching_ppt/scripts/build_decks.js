@@ -32,13 +32,25 @@ const COURSE = { cn: "新一代移动通信系统（双语）", en: "Next-Genera
 const SCHOOL = { cn: "信息科学与工程学院", en: "School of Information Science and Engineering" };
 const INSTRUCTOR = "主讲教师 Instructor：张淼";
 
+// Layout titles must stay ASCII: pptxgenjs names each layout's background image after its
+// title, and Office rejects package part names with non-ASCII characters. The bilingual
+// names below are what PowerPoint shows in its layout gallery (set in finalizeDeck).
 const L = {
-  COVER: "Cover 封面",
-  CONTENTS: "Contents 目录",
-  SECTION: "Section 节标题",
-  CONTENT: "Title and Content 标题和内容",
-  TITLE: "Title Only 仅标题",
-  CLOSING: "Closing 结束页",
+  COVER: "Cover",
+  CONTENTS: "Contents",
+  SECTION: "Section",
+  CONTENT: "Title and Content",
+  TITLE: "Title Only",
+  CLOSING: "Closing",
+};
+const LAYOUT_LABELS = {
+  DEFAULT: "Blank 空白",
+  [L.COVER]: "Cover 封面",
+  [L.CONTENTS]: "Contents 目录",
+  [L.SECTION]: "Section 节标题",
+  [L.CONTENT]: "Title and Content 标题和内容",
+  [L.TITLE]: "Title Only 仅标题",
+  [L.CLOSING]: "Closing 结束页",
 };
 
 // ----------------------------------------------------------------------------- chapters
@@ -477,7 +489,7 @@ class Deck {
   async write(outDir) {
     const file = path.join(outDir, this.ch.file);
     await this.pres.writeFile({ fileName: file });
-    await finalizeTheme(file, this.ch);
+    await finalizeDeck(file, this.ch);
     return file;
   }
 }
@@ -485,8 +497,8 @@ class Deck {
 // ----------------------------------------------------------------------------- theme
 const SLOTS = ["dk1", "lt1", "dk2", "lt2", "accent1", "accent2", "accent3", "accent4", "accent5", "accent6", "hlink", "folHlink"];
 
-/** Write the chapter palette and fonts (Arial + 微软雅黑 for East Asian text) into the theme. */
-async function finalizeTheme(file, ch) {
+/** Post-process a written deck: chapter palette and fonts (Arial + 微软雅黑) in the theme, schema and package fixes. */
+async function finalizeDeck(file, ch) {
   const zip = await JSZip.loadAsync(fs.readFileSync(file));
   const part = "ppt/theme/theme1.xml";
   const name = `新一代移动通信系统 第${ch.n}章`;
@@ -525,17 +537,61 @@ async function finalizeTheme(file, ch) {
   const master = (await zip.file(masterPart).async("string")).replace(/<p:bodyStyle>[\s\S]*?<\/p:bodyStyle>/, (body) =>
     body.replace(/(<a:lvl(\d)pPr\b[\s\S]*?<a:defRPr sz=")\d+"/g, (_, head, lvl) => `${head}${LEVEL_SZ[lvl] || 1400}"`));
   zip.file(masterPart, master);
+  // bilingual layout names for PowerPoint's gallery (the titles pptxgenjs saw are ASCII)
   for (const f of Object.keys(zip.files)) {
     if (!/^ppt\/slideLayouts\/[^/]+\.xml$/.test(f)) continue;
     const src = await zip.file(f).async("string");
-    if (src.includes('<p:cSld name="DEFAULT"')) zip.file(f, src.replace('<p:cSld name="DEFAULT"', '<p:cSld name="Blank 空白"'));
+    const out = src.replace(/<p:cSld name="([^"]*)"/, (m, n) => `<p:cSld name="${LAYOUT_LABELS[n] || n}"`);
+    if (out !== src) zip.file(f, out);
+  }
+  // pptxgenjs declares a content type for slideMaster1..N (one per slide) though it writes
+  // only slideMaster1; drop overrides whose part does not exist
+  const ctPart = "[Content_Types].xml";
+  const ct = (await zip.file(ctPart).async("string")).replace(/<Override PartName="\/([^"]+)"[^>]*\/>/g, (m, n) => (zip.file(n) ? m : ""));
+  zip.file(ctPart, ct);
+  // charts: a series lists its <c:dPt> colours before <c:dLbls> (pptxgenjs writes them after),
+  // and a 2-D chart has exactly two axis ids (pptxgenjs adds the 3-D series axis id to all)
+  for (const f of Object.keys(zip.files)) {
+    if (!/^ppt\/charts\/chart\d+\.xml$/.test(f)) continue;
+    let xml = await zip.file(f).async("string");
+    xml = xml.replace(/<c:ser>([\s\S]*?)<\/c:ser>/g, (whole, inner) => {
+      const dpts = inner.match(/<c:dPt>[\s\S]*?<\/c:dPt>/g);
+      if (!dpts) return whole;
+      const rest = inner.replace(/<c:dPt>[\s\S]*?<\/c:dPt>/g, "");
+      const at = rest.search(/<c:dLbls>|<c:trendline>|<c:errBars>|<c:cat>|<c:val>/);
+      return `<c:ser>${rest.slice(0, at)}${dpts.join("")}${rest.slice(at)}</c:ser>`;
+    });
+    if (!xml.includes("<c:serAx>")) xml = xml.replace(/<c:axId val="2094734556"\/>/g, "");
+    zip.file(f, xml);
   }
   for (const f of Object.keys(zip.files)) {
     if (!f.endsWith(".xml")) continue;
     const bad = (await zip.file(f).async("string")).match(/<a:srgbClr val="((?![0-9A-Fa-f]{6}")[^"]*)"/);
     if (bad) throw new Error(`${f}: <a:srgbClr val="${bad[1]}"> is not a hex colour`);
   }
+  await checkPackage(zip, ct);
   fs.writeFileSync(file, await zip.generateAsync({ type: "nodebuffer", compression: "DEFLATE" }));
+}
+
+/** Package rules PowerPoint enforces when opening a file (it offers to "repair" otherwise):
+ * ASCII part names, internal relationships that resolve, a content type for every part. */
+async function checkPackage(zip, ct) {
+  const defaults = new Set([...ct.matchAll(/<Default Extension="([^"]+)"/g)].map((m) => m[1].toLowerCase()));
+  const overrides = new Set([...ct.matchAll(/<Override PartName="\/([^"]+)"/g)].map((m) => m[1]));
+  const parts = Object.keys(zip.files).filter((f) => !zip.files[f].dir && f !== "[Content_Types].xml");
+  for (const f of parts) {
+    if (!/^[A-Za-z0-9._\-/]+$/.test(f)) throw new Error(`part name "${f}" is not plain ASCII; Office rejects it`);
+    if (!overrides.has(f) && !defaults.has(f.split(".").pop().toLowerCase())) throw new Error(`part "${f}" has no content type`);
+  }
+  for (const f of parts.filter((p) => p.endsWith(".rels"))) {
+    const base = f.replace(/_rels\/[^/]*\.rels$/, "");
+    for (const [tag] of (await zip.file(f).async("string")).matchAll(/<Relationship\b[^>]*>/g)) {
+      if (/TargetMode="External"/.test(tag)) continue;
+      const target = /Target="([^"]+)"/.exec(tag)[1];
+      const resolved = path.posix.normalize(target.startsWith("/") ? target.slice(1) : base + target);
+      if (!zip.file(resolved)) throw new Error(`${f}: relationship target "${target}" does not exist`);
+    }
+  }
 }
 
 // ----------------------------------------------------------------------------- chapter 1 content
